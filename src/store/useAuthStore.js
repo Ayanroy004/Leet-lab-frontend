@@ -26,7 +26,7 @@ export const useAuthStore = create((set) => ({
     set({ isSignInUp: true });
 
     try {
-      const res = await axiosInstance.post("/auth/register",data);
+      const res = await axiosInstance.post("/auth/register", data);
       console.log("Sing in user : ", res.data);
       set({ authUser: res.data.user });
 
@@ -43,7 +43,7 @@ export const useAuthStore = create((set) => ({
     set({ isLoggingIn: true });
 
     try {
-      const res = await axiosInstance.post("/auth/login",data);
+      const res = await axiosInstance.post("/auth/login", data);
       console.log("Login data", res.data);
       set({ authUser: res.data.user });
       toast.success(res.data.message);
