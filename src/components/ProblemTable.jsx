@@ -1,13 +1,26 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { useAuthStore } from "../store/useAuthStore";
 import { Link } from "react-router-dom";
 import { Bookmark, PencilIcon, Trash, TrashIcon, Plus } from "lucide-react";
+import { useDeleteProblemStore } from "../store/useDeleteProblem";
+import { useProblemStore } from "../store/useProblemStore";
+import { usePlaylistStore } from "../store/usePlaylistStore";
+import { CreatePlaylistModel } from "./CreatePlaylistModel";
+import AddToPlaylist from "./AddToPlaylist";
 
 export const ProblemTable = ({ problems }) => {
   const { authUser } = useAuthStore();
   const [search, setSearch] = useState("");
   const [difficulty, setDifficulty] = useState("ALL");
   const [selectedTag, setSelectedTag] = useState("ALL");
+  const [selectedProblemId, setSelectedProblemId] = useState(null);
+  const { isDelete, deleteProblem } = useDeleteProblemStore();
+  const { getAllProblems } = useProblemStore();
+
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isAddToPlaylistModalOpen, setIsAddToPlaylistModalOpen] =
+    useState(false);
+  const { createPlaylist } = usePlaylistStore();
 
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -16,23 +29,26 @@ export const ProblemTable = ({ problems }) => {
 
     const tagsSet = new Set();
 
-    console.log("tags: ",problems)
+    // console.log("tags: ", problems);
     problems.forEach((p) => p.tags?.forEach((t) => tagsSet.add(t)));
 
     return Array.from(tagsSet);
   }, [problems]);
 
   const filteredProblems = useMemo(() => {
-    return problems || []
-      .filter((problem) =>
-        problem.title.toLowerCase().includes(search.toLowerCase())
-      )
-      .filter((problem) =>
-        difficulty === "ALL" ? true : problem.difficulty === difficulty
-      )
-      .filter((problem) =>
-        selectedTag === "ALL" ? true : problem.tags?.includes(selectedTag)
-      );
+    return (
+      problems ||
+      []
+        .filter((problem) =>
+          problem.title.toLowerCase().includes(search.toLowerCase())
+        )
+        .filter((problem) =>
+          difficulty === "ALL" ? true : problem.difficulty === difficulty
+        )
+        .filter((problem) =>
+          selectedTag === "ALL" ? true : problem.tags?.includes(selectedTag)
+        )
+    );
   }, [problems, search, difficulty, selectedTag]);
 
   const itemsPerPage = 5;
@@ -46,12 +62,21 @@ export const ProblemTable = ({ problems }) => {
 
   const difficulties = ["EASY", "MEDIUM", "HARD"];
 
-  const handleDelete = (id) => {
-    console.log(id);
-  };
+  const handleDelete = useCallback(
+    async (id) => {
+      await deleteProblem(id);
+      getAllProblems(); // this refetches problems after deletion
+    },
+    [deleteProblem, getAllProblems]
+  );
 
   const handleAddToPlaylist = (id) => {
-    console.log(id);
+    setSelectedProblemId(id);
+    setIsAddToPlaylistModalOpen(true);
+  };
+  const handleCreatePlaylist = async (playlistName) => {
+    await createPlaylist(playlistName);
+    setIsCreateModalOpen(false);
   };
 
   return (
@@ -59,7 +84,10 @@ export const ProblemTable = ({ problems }) => {
       {/* Header with Create Playlist Button */}
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">Problems</h2>
-        <button className="btn btn-primary gap-2" onClick={() => {}}>
+        <button
+          className="btn btn-primary gap-2"
+          onClick={() => setIsCreateModalOpen(true)}
+        >
           <Plus className="w-4 h-4" />
           Create Playlist
         </button>
@@ -223,17 +251,17 @@ export const ProblemTable = ({ problems }) => {
       </div>
 
       {/* Modals */}
-      {/* <CreatePlaylistModal
+      <CreatePlaylistModel
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onSubmit={handleCreatePlaylist}
       />
 
-      <AddToPlaylistModal
+      <AddToPlaylist
         isOpen={isAddToPlaylistModalOpen}
         onClose={() => setIsAddToPlaylistModalOpen(false)}
         problemId={selectedProblemId}
-      /> */}
+      />
     </div>
   );
 };

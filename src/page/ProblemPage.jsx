@@ -26,6 +26,7 @@ import SubmissionResults from "../components/Submission";
 import SubmissionList from "../components/SubmissionList";
 
 const ProblemPage = () => {
+
   const { id } = useParams();
   const { getProblemById, problem, isProblemLoading } = useProblemStore();
 
@@ -35,7 +36,9 @@ const ProblemPage = () => {
     submissionCount,
     getSubmissionForProblem,
     getSubmissionCountForProblem,
+    
   } = useSubmissionStore();
+  
 
   const [code, setCode] = useState("");
   const [activeTab, setActiveTab] = useState("description");
@@ -44,24 +47,31 @@ const ProblemPage = () => {
   const [testcases, setTestCases] = useState([]);
   const { isExecuting, submission, executeCode } = useExecutionStore();
 
+
+  
+
   const handleRunCode = (e) => {
     e.preventDefault();
     try {
       const language_id = getLanguageId(selectedLanguage);
       const stdin = problem.testcases.map((tc) => tc.input);
-      const expected_outputs = problem.testCases.map((tc) => tc.output);
+      const expected_outputs = problem.testcases.map((tc) => tc.output);
       executeCode(code, language_id, stdin, expected_outputs, id);
     } catch (error) {
       console.log("Error executing code : ", error);
     }
   };
 
-  console.log("This is Problem :", problem);
+  // console.log("This is Problem :", problem);
   useEffect(() => {
-    getProblemById(id);
-    getSubmissionCountForProblem(id);
-  }, [id, getProblemById, getSubmissionCountForProblem]);
+    if(id){
+      getProblemById(id);
+      getSubmissionCountForProblem(id);
+    }
+  }, [id]);
+  // console.log("Submission count :", submissionCount);
 
+  
   useEffect(() => {
     if (problem) {
       setCode(problem.codeSnippets?.[selectedLanguage] || "");
@@ -74,14 +84,24 @@ const ProblemPage = () => {
       );
     }
   }, [problem, selectedLanguage]);
-  if (isProblemLoading || !problem) {
-    return <div className="p-10 text-center text-lg">Loading Problem...</div>;
-  }
+
+  useEffect(()=>{
+    if(activeTab === "submissions" && id){
+      getSubmissionForProblem(id);
+    }
+  },[activeTab, id])
+
+  // console.log("Submission Data problem page:", submissions);
+
   const handleLanguageChange = (e) => {
     const lang = e.target.value;
     setSelectedLanguage(lang);
     setCode(problem.codeSnippets?.[lang] || "");
   };
+
+  if (isProblemLoading || !problem) {
+    return <div className="p-10 text-center text-lg">Loading Problem...</div>;
+  }
 
   const renderTabContent = () => {
     switch (activeTab) {

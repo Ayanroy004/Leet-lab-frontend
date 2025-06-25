@@ -8,6 +8,7 @@ import {
 
 const SubmissionsList = ({ submissions, isLoading }) => {
   // Helper function to safely parse JSON strings
+
   const safeParse = (data) => {
     try {
       return JSON.parse(data);
@@ -18,24 +19,24 @@ const SubmissionsList = ({ submissions, isLoading }) => {
   };
 
   // Helper function to calculate average memory usage
-  const calculateAverageMemory = (memoryData) => {
-    const memoryArray = safeParse(memoryData).map((m) =>
-      parseFloat(m.split(" ")[0])
-    );
-    if (memoryArray.length === 0) return 0;
-    return (
-      memoryArray.reduce((acc, curr) => acc + curr, 0) / memoryArray.length
-    );
-  };
+  // const calculateAverageMemory = (memoryData) => {
+  //   const memoryArray = safeParse(memoryData).map((m) =>
+  //     parseFloat(m.split(" ")[0])
+  //   );
+  //   if (memoryArray.length === 0) return 0;
+  //   return (
+  //     memoryArray.reduce((acc, curr) => acc + curr, 0) / memoryArray.length
+  //   );
+  // };
 
-  // Helper function to calculate average runtime
-  const calculateAverageTime = (timeData) => {
-    const timeArray = safeParse(timeData).map((t) =>
-      parseFloat(t.split(" ")[0])
-    );
-    if (timeArray.length === 0) return 0;
-    return timeArray.reduce((acc, curr) => acc + curr, 0) / timeArray.length;
-  };
+  // // Helper function to calculate average runtime
+  // const calculateAverageTime = (timeData) => {
+  //   const timeArray = safeParse(timeData).map((t) =>
+  //     parseFloat(t.split(" ")[0])
+  //   );
+  //   if (timeArray.length === 0) return 0;
+  //   return timeArray.reduce((acc, curr) => acc + curr, 0) / timeArray.length;
+  // };
 
   // Loading state
   if (isLoading) {
@@ -45,7 +46,8 @@ const SubmissionsList = ({ submissions, isLoading }) => {
       </div>
     );
   }
-
+  console.log("hello");
+  console.log("Submissions Data:", submissions);
   // No submissions state
   if (!submissions?.length) {
     return (
@@ -55,11 +57,28 @@ const SubmissionsList = ({ submissions, isLoading }) => {
     );
   }
 
+  console.log("Submissions List data :", submissions);
+
   return (
     <div className="space-y-4">
       {submissions.map((submission) => {
-        const avgMemory = calculateAverageMemory(submission.memory);
-        const avgTime = calculateAverageTime(submission.time);
+        // const avgMemory = calculateAverageMemory(submission.memory);
+        // const avgTime = calculateAverageTime(submission.time);
+        const avgMemory =
+          submissions
+            .map((s) => parseFloat(s.memory)) // convert "6792 KB" → 6792
+            .reduce((acc, val) => acc + val, 0) / submissions.length;
+
+        const allTimes = submissions.flatMap(({ time }) =>
+          typeof time === "string"
+            ? [...(time.match(/\d+\.\d{3}/g) || [])].map(Number)
+            : []
+        );
+
+        const avgTime =
+          allTimes.length > 0
+            ? allTimes.reduce((acc, val) => acc + val, 0) / allTimes.length
+            : 0;
 
         return (
           <div
@@ -81,7 +100,9 @@ const SubmissionsList = ({ submissions, isLoading }) => {
                       <span className="font-semibold">{submission.status}</span>
                     </div>
                   )}
-                  <div className="badge badge-neutral">{submission.language}</div>
+                  <div className="badge badge-neutral">
+                    {submission.language}
+                  </div>
                 </div>
 
                 {/* Right Section: Runtime, Memory, and Date */}
